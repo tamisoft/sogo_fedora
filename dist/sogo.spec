@@ -1,6 +1,6 @@
 %define sogo_major_version 5
 %define sogo_minor_version 12
-%define sogo_patch_version 0
+%define sogo_patch_version 1
 %define sogo_version %{sogo_major_version}.%{sogo_minor_version}.%{sogo_patch_version}
 
 %define sope_major_version 4
@@ -11,7 +11,7 @@
 Summary:      SOGo
 Name:         sogo
 Version:      %{sogo_version}
-Release:      4%{?dist}
+Release:      5%{?dist}
 Packager:     Clemens Lang <cl@clang.name>
 License:      GPL-2.0+
 URL:          https://www.sogo.nu/
@@ -46,6 +46,14 @@ BuildRequires: /usr/bin/pkg-config
 %define saml2_cfg_opts "--enable-saml2"
 %define mfa_cfg_opts "--enable-mfa"
 %define sodium_cfg_opts "--enable-sodium"
+
+%if 0%{?fedora} < 42
+%define _target_bindir %{_sbindir}
+%else
+# Fedora 42 is consolidating /bin and /sbin, latter becoming a symlink
+# rpm macro changed _sbindir is now /usr/bin
+%define _target_bindir %{_bindir}
+%endif
 
 %description
 SOGo is a groupware server built around OpenGroupware.org (OGo) and
@@ -244,6 +252,11 @@ rm -rf ${RPM_BUILD_ROOT}%{_bindir}/test_quick_extract
     ADDITIONAL_OBJCFLAGS="%{optflags}" \
     ADDITIONAL_CFLAGS="%{optflags}" \
     install)
+%if 0%{?fedora} >= 42
+echo "Fedora 42+ has unified sbin-bin, moving output"
+mv ${RPM_BUILD_ROOT}/usr/sbin ${RPM_BUILD_ROOT}%{_bindir}
+%endif
+
 
 # ****************************** clean ********************************
 %clean
@@ -261,7 +274,7 @@ rm -fr ${RPM_BUILD_ROOT}
 %dir %attr(0755, %sogo_user, %sogo_user) %{_var}/run/sogo
 %dir %attr(0700, %sogo_user, %sogo_user) %{_var}/spool/sogo
 %dir %attr(0750, root, %sogo_user) %{_sysconfdir}/sogo
-%{_sbindir}/sogod
+%{_target_bindir}/sogod
 %{_libdir}/sogo/libSOGo.so*
 %{_libdir}/sogo/libSOGoUI.so*
 %{_libdir}/GNUstep/SOGo/AdministrationUI.SOGo
@@ -294,13 +307,13 @@ rm -fr ${RPM_BUILD_ROOT}
 %doc ChangeLog CHANGELOG.md Scripts/*sh Scripts/updates.php Apache/SOGo-apple-ab.conf
 
 %files -n sogo-tool
-%{_sbindir}/sogo-tool
+%{_target_bindir}/sogo-tool
 
 %files -n sogo-ealarms-notify
-%{_sbindir}/sogo-ealarms-notify
+%{_target_bindir}/sogo-ealarms-notify
 
 %files -n sogo-slapd-sockd
-%{_sbindir}/sogo-slapd-sockd
+%{_target_bindir}/sogo-slapd-sockd
 
 %files -n sogo-activesync
 %{_libdir}/GNUstep/SOGo/ActiveSync.SOGo

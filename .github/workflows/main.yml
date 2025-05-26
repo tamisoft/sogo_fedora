@@ -14,7 +14,7 @@ jobs:
 
     strategy:
       matrix:
-        fedora_version: [40,41]
+        fedora_version: [40,41,42]
 
     steps:
     - name: Checkout
@@ -89,7 +89,7 @@ jobs:
   final:
     needs: build
     runs-on: ubuntu-latest
-    container: fedora:41
+    container: fedora:42
     
     steps:
       - name: Download artifacts Fedora 40
@@ -102,6 +102,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifact-${{ github.run_number}}-41
+          path: ${{ github.workspace }}/output_rpms
+
+      - name: Download artifacts Fedora 42
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifact-${{ github.run_number}}-42
           path: ${{ github.workspace }}/output_rpms
 
       - name: Install dependencies
@@ -146,7 +152,7 @@ jobs:
           # Find all the directories that contain a repodata directory and cd into them then run createrepo --update
           find $GITHUB_WORKSPACE/rpmrepo/fedora -type d -name repodata -exec sh -c 'cd $(dirname {}) && createrepo -v --update -x repodata -x .repodata . && pwd && gpg -v --pinentry-mode loopback --batch --detach-sign --yes --armor --passphrase-file /github/home/.gpgpass repodata/repomd.xml' \;
           git add .
-          git commit -m "Update RPMs from build ${{ github.run_number }}"
+          git commit -m "Update RPMs from SOGO build ${{ github.run_number }}"
           git status
           git push
           echo "Done"
